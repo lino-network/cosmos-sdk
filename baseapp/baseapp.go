@@ -28,7 +28,8 @@ type BaseApp struct {
 	name   string               // application name from abci.Info
 	db     dbm.DB               // common DB backend
 	cms    sdk.CommitMultiStore // Main (uncached) state
-	router Router               // handle any kind of message
+	txRouter Router               // handle any kind of message, process transaction and generate changelists
+	changeHandlers []sdk.Handler  // apply changelists to corresponding storage
 
 	// must be set
 	txDecoder   sdk.TxDecoder   // unmarshal []byte into sdk.Tx
@@ -60,7 +61,7 @@ func NewBaseApp(name string, logger log.Logger, db dbm.DB) *BaseApp {
 		name:   name,
 		db:     db,
 		cms:    store.NewCommitMultiStore(db),
-		router: NewRouter(),
+		txRouter: NewRouter(),
 	}
 }
 
@@ -98,7 +99,8 @@ func (app *BaseApp) SetAnteHandler(ah sdk.AnteHandler) {
 	app.anteHandler = ah
 }
 
-func (app *BaseApp) Router() Router { return app.router }
+func (app *BaseApp) TxRouter() Router { return app.txRouter }
+func (app *BaseApp) ChangeHandlers() []sdk.Handler { return app.changeHandlers }
 
 // load latest application version
 func (app *BaseApp) LoadLatestVersion(mainKey sdk.StoreKey) error {
@@ -386,14 +388,31 @@ func (app *BaseApp) runTx(isCheckTx bool, txBytes []byte, tx sdk.Tx) (result sdk
 
 	// Match and run route.
 	msgType := msg.Type()
-	handler := app.router.Route(msgType)
-	result = handler(ctx, msg)
+	handler := app.txRouter.Route(msgType)
+	if handler == nil {
+		return sdk.ErrInternal("Unrecognized msg type").Result()
+	}
+	result = app.goThroughStack(ctx,  msg, append([]sdk.Handler{handler}, app.changeHandlers...)...)
 
 	// If result was successful, write to app.checkState.ms or app.deliverState.ms
 	if result.IsOK() {
 		msCache.Write()
 	}
 
+	return result
+}
+
+func (app *BaseApp) goThroughStack(ctx sdk.Context, msg sdk.Msg, handlers ...sdk.Handler) (result sdk.Result) {
+	for _, handler := range handlers {
+		var newCtx sdk.Context
+		newCtx, result = handler(ctx, msg)
+		if !result.IsOK() {
+			return result
+		}
+		if !newCtx.IsZero() {
+			ctx = newCtx
+		}
+	}
 	return result
 }
 

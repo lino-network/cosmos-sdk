@@ -8,7 +8,7 @@ import (
 
 // Handle all "bank" type messages.
 func NewHandler(ck CoinKeeper) sdk.Handler {
-	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
+	return func(ctx sdk.Context, msg sdk.Msg) (sdk.Context, sdk.Result) {
 		switch msg := msg.(type) {
 		case SendMsg:
 			return handleSendMsg(ctx, ck, msg)
@@ -16,34 +16,34 @@ func NewHandler(ck CoinKeeper) sdk.Handler {
 			return handleIssueMsg(ctx, ck, msg)
 		default:
 			errMsg := "Unrecognized bank Msg type: " + reflect.TypeOf(msg).Name()
-			return sdk.ErrUnknownRequest(errMsg).Result()
+			return ctx, sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
 
 // Handle SendMsg.
-func handleSendMsg(ctx sdk.Context, ck CoinKeeper, msg SendMsg) sdk.Result {
+func handleSendMsg(ctx sdk.Context, ck CoinKeeper, msg SendMsg) (sdk.Context, sdk.Result) {
 	// NOTE: totalIn == totalOut should already have been checked
 
 	for _, in := range msg.Inputs {
 		_, err := ck.SubtractCoins(ctx, in.Address, in.Coins)
 		if err != nil {
-			return err.Result()
+			return ctx, err.Result()
 		}
 	}
 
 	for _, out := range msg.Outputs {
 		_, err := ck.AddCoins(ctx, out.Address, out.Coins)
 		if err != nil {
-			return err.Result()
+			return ctx, err.Result()
 		}
 	}
 
 	// TODO: add some tags so we can search it!
-	return sdk.Result{} // TODO
+	return ctx, sdk.Result{} // TODO
 }
 
 // Handle IssueMsg.
-func handleIssueMsg(ctx sdk.Context, ck CoinKeeper, msg IssueMsg) sdk.Result {
+func handleIssueMsg(ctx sdk.Context, ck CoinKeeper, msg IssueMsg) (sdk.Context, sdk.Result) {
 	panic("not implemented yet")
 }

@@ -53,7 +53,7 @@ func NewBasecoinApp(logger log.Logger, db dbm.DB) *BasecoinApp {
 
 	// add handlers
 	coinKeeper := bank.NewCoinKeeper(app.accountMapper)
-	app.Router().
+	app.TxRouter().
 		AddRoute("bank", bank.NewHandler(coinKeeper)).
 		AddRoute("sketchy", sketchy.NewHandler())
 
