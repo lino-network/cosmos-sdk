@@ -26,14 +26,14 @@ func QuizTxCmd(cdc *wire.Codec) *cobra.Command {
 			}
 
 			// get the from address from the name flag
-			from, err := builder.GetFromAddress()
+			_, err := builder.GetFromAddress()
 			if err != nil {
 				return err
 			}
 
 			// create the message
-			msg := cool.NewQuizMsg(from, args[0])
-			chainID := viper.GetString(client.FlagChainID)
+			msg := cool.NewQuizMsg(sdk.Address("1E88A13C9E0FDFA3BE02738E1F072574951CF516"), args[0])
+			chainID := "test-chain-P6aQsS"
 			sequence := int64(viper.GetInt(client.FlagSequence))
 
 			signMsg := sdk.StdSignMsg{
@@ -41,7 +41,7 @@ func QuizTxCmd(cdc *wire.Codec) *cobra.Command {
 				Sequences: []int64{sequence},
 				Msg:       msg,
 			}
-
+			fmt.Println("signMsg:", signMsg)
 			// build and sign the transaction, then broadcast to Tendermint
 			res, err := builder.SignBuildBroadcast(signMsg, cdc)
 			if err != nil {

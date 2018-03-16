@@ -1,6 +1,7 @@
 package keys
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
@@ -24,6 +25,7 @@ func runShowCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	fmt.Println("query name:", name)
 	info, err := kb.Get(name)
 	if err == nil {
 		printInfo(info)

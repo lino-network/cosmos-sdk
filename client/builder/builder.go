@@ -116,7 +116,12 @@ func SignAndBuild(signMsg sdk.StdSignMsg, cdc *wire.Codec) ([]byte, error) {
 
 	// marshal bytes
 	tx := sdk.NewStdTx(signMsg.Msg, sigs)
+	signBytes := sdk.StdSignBytes("test-chain-P6aQsS", []int64{viper.GetInt64(client.FlagSequence)}, signMsg.Msg)
 
+	fmt.Println(sigs[0].PubKey.VerifyBytes(signBytes, sigs[0].Signature))
+	fmt.Println(sigs[0].PubKey.VerifyBytes(bz, sigs[0].Signature))
+
+	fmt.Println(tx)
 	return cdc.MarshalBinary(tx)
 }
 

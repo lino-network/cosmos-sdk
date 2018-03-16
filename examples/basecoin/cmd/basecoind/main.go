@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	abci "github.com/tendermint/abci/types"
 	"github.com/tendermint/tmlibs/cli"
 	dbm "github.com/tendermint/tmlibs/db"
 	"github.com/tendermint/tmlibs/log"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 
 	"github.com/cosmos/cosmos-sdk/examples/basecoin/app"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -28,16 +30,20 @@ var (
 // defaultOptions sets up the app_options for the
 // default genesis file
 func defaultOptions(args []string) (json.RawMessage, error) {
-	addr, secret, err := server.GenerateCoinKey()
+
+	keybase, err := keys.GetKeyBase()
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Secret phrase to access coins:")
-	fmt.Println(secret)
-
+	name := viper.GetString("yukaitu")
+	info, _:= keybase.Get(name)
+	fmt.Println(info)
+	if err != nil {
+		return nil, err
+	}
 	opts := fmt.Sprintf(`{
       "accounts": [{
-        "address": "%s",
+        "address": "1E88A13C9E0FDFA3BE02738E1F072574951CF516",
         "coins": [
           {
             "denom": "mycoin",
@@ -45,7 +51,7 @@ func defaultOptions(args []string) (json.RawMessage, error) {
           }
         ]
       }]
-    }`, addr)
+    }`)
 	return json.RawMessage(opts), nil
 }
 

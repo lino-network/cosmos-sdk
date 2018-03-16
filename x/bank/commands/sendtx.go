@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
+	"reflect"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -11,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/builder"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
@@ -50,8 +52,7 @@ func (c commander) sendTxCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := "test-chain-P6aQsS"
 	sequence := int64(viper.GetInt(client.FlagSequence))
 
 	signMsg := sdk.StdSignMsg{
@@ -71,8 +72,38 @@ func (c commander) sendTxCmd(cmd *cobra.Command, args []string) error {
 }
 
 func buildMsg(from sdk.Address) (sdk.Msg, error) {
+	keybase, err := keys.GetKeyBase()
+	if err != nil {
+		return nil, err
+	}
 
+	name := "yukaitu"
+
+	info, err := keybase.Get(name)
+	if err != nil {
+		return nil, nil
+	}
+
+	name1 := viper.GetString(client.FlagName)
+	info2, err := keybase.Get(name1)
+	if err != nil {
+		return nil, nil
+	}
+
+	fmt.Println(reflect.DeepEqual(info, info2))
+
+	fmt.Println(reflect.DeepEqual(info.Address, info2.Address))
 	// parse coins
+
+	info3, err := keybase.Get(name)
+	if err != nil {
+		return nil, nil
+	}
+	fmt.Println(info.PubKey.Address(), info3.PubKey.Address())
+	fmt.Println(reflect.DeepEqual(info.PubKey.Address(), info3.PubKey.Address()))
+	fmt.Println(info.PubKey.Address() == info3.PubKey.Address())
+	// parse coins
+
 	amount := viper.GetString(flagAmount)
 	coins, err := sdk.ParseCoins(amount)
 	if err != nil {
@@ -87,7 +118,7 @@ func buildMsg(from sdk.Address) (sdk.Msg, error) {
 	}
 	to := sdk.Address(bz)
 
-	input := bank.NewInput(from, coins)
+	input := bank.NewInput(info.PubKey.Address(), coins)
 	output := bank.NewOutput(to, coins)
 	msg := bank.NewSendMsg([]bank.Input{input}, []bank.Output{output})
 	return msg, nil
