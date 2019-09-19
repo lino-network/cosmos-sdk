@@ -72,6 +72,8 @@ func NewLevelDB(name, dir string) (db dbm.DB, err error) {
 	backend := dbm.GoLevelDBBackend
 	if DBBackend == string(dbm.CLevelDBBackend) {
 		backend = dbm.CLevelDBBackend
+	} else if DBBackend == string(dbm.RocksDBBackend) {
+		backend = dbm.RocksDBBackend
 	}
 	defer func() {
 		if r := recover(); r != nil {
